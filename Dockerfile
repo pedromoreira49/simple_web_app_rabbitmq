@@ -14,7 +14,7 @@ RUN docker-php-ext-install mysqli
 # Instala dependências da aplicação
 WORKDIR /var/www/html
 COPY . /var/www/html
-RUN composer install --no-dev --optimeze-autoloader
+RUN composer install --no-dev --optimize-autoloader
 
 # Ativa o mod_rewrite do Apache
 RUN a2enmod rewrite
