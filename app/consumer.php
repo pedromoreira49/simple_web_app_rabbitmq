@@ -2,14 +2,40 @@
 // app/consumer.php
 require_once 'vendor/autoload.php';
 
+$config = require 'config.php';
+
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PHPMailer\PHPMailer\PHPMailer;
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-$connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest');
+$maxRetries = 10;
+$retryDelay = 5;
+
+for ($i = 1; $i <= $maxRetries; $i++) {
+  try {
+    echo "Tentando conectar ao RabbitMQ (tentativa $i)...\n";
+    $connection = new AMQPStreamConnection(
+      $config['host'],
+      $config['port'],
+      $config['user'],
+      $config['password'],
+      $config['vhost']
+    );
+    echo "Conectado ao RabbitMQ!\n";
+    break;
+  } catch (Exception $e) {
+    echo "Erro na conexão: {$e->getMessage()}\n";
+    if ($i == $maxRetries) {
+      echo "Número máximo de tentativas excedido. Encerrando.\n";
+      exit(1);
+    }
+    sleep($retryDelay);
+  }
+}
+
 $channel = $connection->channel();
 $channel->queue_declare('email_queue', false, true, false, false);
 
