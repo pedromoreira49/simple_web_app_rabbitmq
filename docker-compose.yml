@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-service
+    ports:
+      - "5672:5672"      # Porta para comunicação AMQP
+      - "15672:15672"    # Porta para interface web
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  php:
+    build: .
+    container_name: php
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8080:80"
+    depends_on:
+      - rabbitmq
+  
+  consumer:
+    build: .
+    container_name: consumer
+    command: php app/consumer.php
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - rabbitmq
